@@ -1,0 +1,58 @@
+services:
+  mysql_master:
+    image: mysql:8.0
+    container_name: mysql_master
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: replicacion
+    volumes:
+      - master_db_data:/var/lib/mysql
+      - ./master-my.cnf:/etc/mysql/conf.d/master-my.cnf
+    ports:
+      - "3307:3306"
+
+  mysql_slave:
+    image: mysql:8.0
+    container_name: mysql_slave
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+    volumes:
+      - slave_db_data:/var/lib/mysql
+      - ./slave-my.cnf:/etc/mysql/conf.d/slave-my.cnf
+    ports:
+      - "3308:3306"
+    depends_on:
+      - mysql_master
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: mysql_master
+      PMA_USER: root
+      PMA_PASSWORD: root1234
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql_master
+
+  phpmyadmin_slave:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin_slave
+    restart: always
+    environment:
+      PMA_HOST: mysql_slave
+      PMA_USER: root
+      PMA_PASSWORD: root1234
+    ports:
+      - "8081:80"
+    depends_on:
+      - mysql_slave
+
+volumes:
+  master_db_data:
+  slave_db_data:
+
